@@ -1,14 +1,14 @@
-
 /**
  * Module dependencies.
  */
+var express = require('express')
+, app = module.exports = express.createServer()
+, io = require('socket.io').listen(app);
 
-var express = require('express');
 
-var app = module.exports = express.createServer();
-
-// Configuration
-
+/**
+ * Configuration
+ */
 app.configure(function(){
   app.set('views', __dirname + '/views');
   app.set('view engine', 'jade');
@@ -37,3 +37,9 @@ app.get('/', function(req, res){
 
 app.listen(3000);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
+
+
+io.sockets.on('connection', function(client) {
+
+
+});
