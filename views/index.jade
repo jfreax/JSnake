@@ -6,6 +6,7 @@ html
 
     script(type="text/javascript", src="/javascripts/jquery.min.js")
     script(type="text/javascript", src="/javascripts/raphael-min.js")
+    script(type="text/javascript", src="/javascripts/socket.io.js")
 
     style(type="text/css")
       .canvas{
@@ -15,8 +16,20 @@ html
       }
 
     script(type='text/javascript')
+      var socket = io.connect();
+
+
       var gameLoopID = null;
       var countdownID = null;
+
+      var isMenu = true;
+      var singleplayer = null;
+      var multiplayer  = null;
+      var isMultiplayer = false;
+
+      var waitingdots  = 0;
+      var waitingDotsID = null
+
 
       var east = { x: 1, y: 0 };
       var west = { x: -1, y: 0 };
@@ -50,7 +63,7 @@ html
         bindKeyboard();
 
         //countdownID = setInterval( showCountDownThenStart, 200 );
-        showCountDownThenStart();
+        //showCountDownThenStart();
 
       });
 
@@ -63,18 +76,37 @@ html
       };
 
       function drawMenu() {
+        console.log("Draw menu");
+        singleplayer = gameBoard.text( gameBoard.width/2, gameBoard.height/2 - 40, "singleplayer" ).attr("font-size", 48);
+        multiplayer  = gameBoard.text( gameBoard.width/2, gameBoard.height/2 + 40, "multiplayer"  ).attr("font-size", 48);
+
+        singleplayer.attr("stroke", "#000").attr("stroke-width", "3");
+
       };
 
       function bindKeyboard() {
         $(document).keydown(function(e) {
+          console.log( e.keyCode );
           switch( e.keyCode ) {
             case 40:
-              if ( snake.direction != north )
-                snake.direction = south;
+              if( isMenu ) {
+                multiplayer.attr("stroke", "#000").attr("stroke-width", "3");
+                singleplayer.attr("stroke", "#000").attr("stroke-width", "0");
+                isMultiplayer = true;
+              } else {
+                if ( snake.direction != north )
+                  snake.direction = south;
+              }
               break;
             case 38:
-              if ( snake.direction != south )
-                snake.direction = north;
+              if( isMenu ) {
+                singleplayer.attr("stroke", "#000").attr("stroke-width", "3");
+                multiplayer.attr("stroke", "#000").attr("stroke-width", "0");
+                isMultiplayer = false;
+              } else {
+                if ( snake.direction != south )
+                  snake.direction = north;
+              }
               break;
             case 37:
               if ( snake.direction != east )
@@ -84,12 +116,44 @@ html
               if ( snake.direction != west )
                 snake.direction = east;
               break;
-            case 80:
+            case 13: // Enter
+              if( isMenu ) {
+                startGame();
+              }
+              break;
+            case 80: // 'p'
               togglePause();
               break;
           }
         });
       };
+
+      function startGame() {
+        isMenu = false;
+        singleplayer.remove();
+        multiplayer.remove();
+
+        if( isMultiplayer ) {
+          startMultiPlayer();
+        } else {
+          showCountDownThenStart();
+        }
+
+      };
+
+      function startMultiPlayer() {
+        socket.send( "w" );
+
+        multiplayer = gameBoard.text( 5, 5, "Waiting for player" ).attr("font-size", 16).attr("text-anchor", "start");
+        waitingDotsID = setInterval( printWaitingDots, 400 );
+      };
+
+      function printWaitingDots() {
+         multiplayer.remove();
+         var string = "Waiting for player..."
+         waitingdots = (waitingdots+1) % 4;
+         multiplayer = gameBoard.text( 5, 5, string.substr(0,18+waitingdots) ).attr("font-size", 16).attr("text-anchor", "start");
+      }
 
       function togglePause() {
         if ( pause ) {
@@ -108,6 +172,7 @@ html
           setTimeout ( 'showCountDownThenStart()', 1000 );
         } else {
           var t = gameBoard.text( gameBoard.width/2, gameBoard.height/2, "GO!" );
+
           togglePause();
         }
         t.attr("font-size", 12);
