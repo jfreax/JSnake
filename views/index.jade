@@ -1,2 +1,41 @@
-h1= title
-p Welcome to #{title}
+!!! 5
+
+html
+  head
+    title= title
+
+    script(type="text/javascript", src="/javascripts/jquery.min.js")
+    script(type="text/javascript", src="/javascripts/raphael-min.js")
+
+    style(type="text/css")
+      .canvas{
+        position: relative;
+        width: 100%;
+        height: 130px;
+      }
+
+    script(type='text/javascript')
+      var snakeW = 16;
+      var snakeH = 16;
+
+      var gameBoard = null;
+      var snake = [];
+
+      $(document).ready(function() {
+        gameBoard = Raphael(10, 50, 320, 200);
+
+        initSnake();
+      });
+
+      function initSnake() {
+        snake.length = 0;
+
+        for ( var i = 0; i < 3; ++i ) {
+          snake.push( gameBoard.rect((5+i)*snakeW, 5*snakeH, snakeW, snakeH, 3) );
+          snake[i].attr("fill", "#f00");
+          snake[i].attr("stroke", "#333");
+        }
+      };
+
+  body
+    p Welcome to #{title}
