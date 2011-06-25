@@ -15,27 +15,136 @@ html
       }
 
     script(type='text/javascript')
-      var snakeW = 16;
-      var snakeH = 16;
+      var gameLoopID = null;
+      var countdownID = null;
+
+      var east = { x: 1, y: 0 };
+      var west = { x: -1, y: 0 };
+      var north = { x: 0, y: -1 };
+      var south = { x: 0, y: 1 };
 
       var gameBoard = null;
-      var snake = [];
+      var pause = true;
+      var snake = {
+        blocks:    [],
+        position:  { x: 5, y: 5 },
+        width:     16,
+        height:     16,
+        direction: east
+      }
+
+      var showCount = {
+        i:    3,
+        text: []
+      }
 
       $(document).ready(function() {
-        gameBoard = Raphael(10, 50, 320, 200);
+        var sizeX = 30;
+        var sizeY = 20;
+        gameBoard = Raphael( 10, 50, snake.width*sizeX+6, snake.height*sizeY+6 );
+        gameBoard.sizeX = sizeX;
+        gameBoard.sizeY = sizeY;
 
         initSnake();
+        drawMenu();
+        bindKeyboard();
+
+        //countdownID = setInterval( showCountDownThenStart, 200 );
+        showCountDownThenStart();
+
       });
 
       function initSnake() {
-        snake.length = 0;
+        snake.blocks.length = snake.length = 0;
 
         for ( var i = 0; i < 3; ++i ) {
-          snake.push( gameBoard.rect((5+i)*snakeW, 5*snakeH, snakeW, snakeH, 3) );
-          snake[i].attr("fill", "#f00");
-          snake[i].attr("stroke", "#333");
+          addBlock();
         }
       };
+
+      function drawMenu() {
+      };
+
+      function bindKeyboard() {
+        $(document).keydown(function(e) {
+          switch( e.keyCode ) {
+            case 40:
+              if ( snake.direction != north )
+                snake.direction = south;
+              break;
+            case 38:
+              if ( snake.direction != south )
+                snake.direction = north;
+              break;
+            case 37:
+              if ( snake.direction != east )
+                snake.direction = west;
+              break;
+            case 39:
+              if ( snake.direction != west )
+                snake.direction = east;
+              break;
+            case 80:
+              togglePause();
+              break;
+          }
+        });
+      };
+
+      function togglePause() {
+        if ( pause ) {
+          pause = false;
+          gameLoopID = setInterval( moveSnake, 200 );
+        } else {
+          pause = true;
+          clearInterval( gameLoopID );
+        }
+      };
+
+      function showCountDownThenStart() {
+        var t;
+        if( showCount.i > 0 ) {
+          var t = gameBoard.text( gameBoard.width/2, gameBoard.height/2, showCount.i );
+          setTimeout ( 'showCountDownThenStart()', 1000 );
+        } else {
+          var t = gameBoard.text( gameBoard.width/2, gameBoard.height/2, "GO!" );
+          togglePause();
+        }
+        t.attr("font-size", 12);
+
+        t.animate( { "font-size": 320, easing: ">" }, 1000 );
+        t.animate( { opacity: 0, easing: ">" }, 1000 );
+
+        showCount.i--;
+      }
+
+      function addBlock() {
+          var x = snake.position.x + snake.direction.x;
+          var y = snake.position.y + snake.direction.y;
+
+          if( x >= gameBoard.sizeX )
+            x = 0;
+          if( y >= gameBoard.sizeY )
+            y = 0;
+          if( x < 0 )
+            x = gameBoard.sizeX-1;
+          if( y < 0 )
+            y = gameBoard.sizeY-1;
+
+          var c = gameBoard.rect( x * snake.width+3, y * snake.height+3, snake.width, snake.height, 3 )
+          c.attr("fill", "#f00");
+          c.attr("stroke", "#333");
+
+          snake.blocks.unshift( c );
+
+          snake.position.x = x;
+          snake.position.y = y;
+      };
+
+      function moveSnake() {
+        snake.blocks.pop().remove();
+        addBlock();
+      }
 
   body
     p Welcome to #{title}
