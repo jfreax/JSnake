@@ -28,7 +28,7 @@ html
       var isMultiplayer = false;
 
       var waitingdots  = 0;
-      var waitingDotsID = null
+      var waitingDotsID = null;
 
 
       var east = { x: 1, y: 0 };
@@ -36,44 +36,76 @@ html
       var north = { x: 0, y: -1 };
       var south = { x: 0, y: 1 };
 
+      function Snake()
+      {
+        this.blocks   = [];
+        this.position = { x: 5, y: 5 };
+        this.width    = 16;
+        this.height   =  16;
+        this.direction= east;
+
+        this.init = function() {
+          this.blocks.length = this.length = 0;
+
+          for ( var i = 0; i < 3; ++i ) {
+            this.addBlock();
+          }
+        };
+
+        this.addBlock = function() {
+          var x = this.position.x + this.direction.x;
+          var y = this.position.y + this.direction.y;
+
+          if( x >= gameBoard.sizeX )
+            x = 0;
+          if( y >= gameBoard.sizeY )
+            y = 0;
+          if( x < 0 )
+            x = gameBoard.sizeX-1;
+          if( y < 0 )
+            y = gameBoard.sizeY-1;
+
+          var c = gameBoard.rect( x * this.width+3, y * this.height+3, this.width, this.height, 3 )
+          c.attr("fill", "#f00");
+          c.attr("stroke", "#333");
+
+          this.blocks.unshift( c );
+
+          this.position.x = x;
+          this.position.y = y;
+        };
+
+        this.move = function() {
+          console.log("Move: ", this);
+          this.blocks.pop().remove();
+          this.addBlock();
+        };
+      };
+
       var gameBoard = null;
       var pause = true;
-      var snake = {
-        blocks:    [],
-        position:  { x: 5, y: 5 },
-        width:     16,
-        height:     16,
-        direction: east
-      }
+      var snake = new Snake();
 
       var showCount = {
         i:    3,
         text: []
-      }
+      };
 
       $(document).ready(function() {
+        // Attention: magic numbers!
         var sizeX = 30;
         var sizeY = 20;
         gameBoard = Raphael( 10, 50, snake.width*sizeX+6, snake.height*sizeY+6 );
         gameBoard.sizeX = sizeX;
         gameBoard.sizeY = sizeY;
 
-        initSnake();
+        snake.init();
         drawMenu();
         bindKeyboard();
 
-        //countdownID = setInterval( showCountDownThenStart, 200 );
-        //showCountDownThenStart();
-
       });
 
-      function initSnake() {
-        snake.blocks.length = snake.length = 0;
 
-        for ( var i = 0; i < 3; ++i ) {
-          addBlock();
-        }
-      };
 
       function drawMenu() {
         console.log("Draw menu");
@@ -142,7 +174,7 @@ html
       };
 
       function startMultiPlayer() {
-        socket.send( "w" );
+        socket.emit( 'w', "wantMulti" );
 
         multiplayer = gameBoard.text( 5, 5, "Waiting for player" ).attr("font-size", 16).attr("text-anchor", "start");
         waitingDotsID = setInterval( printWaitingDots, 400 );
@@ -158,7 +190,7 @@ html
       function togglePause() {
         if ( pause ) {
           pause = false;
-          gameLoopID = setInterval( moveSnake, 200 );
+          gameLoopID = setInterval( "snake.move()", 200 );
         } else {
           pause = true;
           clearInterval( gameLoopID );
@@ -183,33 +215,15 @@ html
         showCount.i--;
       }
 
-      function addBlock() {
-          var x = snake.position.x + snake.direction.x;
-          var y = snake.position.y + snake.direction.y;
+      
 
-          if( x >= gameBoard.sizeX )
-            x = 0;
-          if( y >= gameBoard.sizeY )
-            y = 0;
-          if( x < 0 )
-            x = gameBoard.sizeX-1;
-          if( y < 0 )
-            y = gameBoard.sizeY-1;
 
-          var c = gameBoard.rect( x * snake.width+3, y * snake.height+3, snake.width, snake.height, 3 )
-          c.attr("fill", "#f00");
-          c.attr("stroke", "#333");
 
-          snake.blocks.unshift( c );
+      // Add a connect listener
+      socket.on('setSnake',function( snake ) {
+        console.log('Received a message from the server!',data);
+      });
 
-          snake.position.x = x;
-          snake.position.y = y;
-      };
-
-      function moveSnake() {
-        snake.blocks.pop().remove();
-        addBlock();
-      }
 
   body
     p Welcome to #{title}

@@ -28,8 +28,10 @@ app.configure('production', function(){
   app.use(express.errorHandler()); 
 });
 
-// Routes
 
+/**
+ * Routes
+ */
 app.get('/', function(req, res){
   res.render('index', {
     title: 'JSnake'
@@ -40,9 +42,35 @@ app.listen(8080);
 console.log("Express server listening on port %d in %s mode", app.address().port, app.settings.env);
 
 
-io.sockets.on('connection', function(client) {
-  client.on('message', function( data ) {
+/**
+ * Globals
+ */
+var waiting = null;
+var players = [];
 
+
+
+io.sockets.on('connection', function(client) {
+  client.on('wantMulti', function( data ) {
+     if( waiting === null ) {
+       waiting = client;
+     } else {
+        newGame = { c1: waiting, c2: client };
+        players.pop( newGame );
+        waiting = null;
+        
+        // prepare the snakes for both players
+        var snake = {
+          blocks:    [],
+          position:  { x: 5, y: 5 },
+          width:     16,
+          height:     16,
+          direction: east
+        };
+        
+        newGame.c1.emit('go');
+        newGame.c2.emit('go');
+     }
   });
 
 });
