@@ -1,10 +1,21 @@
 {
-    "name": "application-name"
-  , "version": "0.0.1"
-  , "private": true
-  , "dependencies": {
-      "express": "2.3.12"
-    , "stylus": ">= 0.0.1"
-    , "jade": ">= 0.0.1"
+  "name": "jsnake",
+  "version": "0.0.1",
+  "private": true,
+  "dependencies": {
+    "express": "2.3.12",
+    "stylus": ">= 0.0.1",
+    "jade": ">= 0.0.1"
+  },
+  "devDependencies": {},
+  "engines": {
+    "node": "*"
+  },
+  "author": "Jens Dieskau <jens.dieskau@googlemail.com>",
+  "description": "A multiplayer snake clone.",
+  "homepage": "https://github.com/jfreax/JSnake",
+  "repository": {
+    "type": "git",
+    "url": "git@github.com:jfreax/JSnake.git"
   }
 }
