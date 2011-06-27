@@ -5,7 +5,6 @@ var express = require('express')
 , app = module.exports = express.createServer()
 , io = require('socket.io').listen(app);
 
-
 /**
  * Configuration
  */
@@ -49,7 +48,30 @@ var waiting = null;
 var players = [];
 
 
+/**
+ * "Enums"
+ */
+var east = { x: 1, y: 0 };
+var west = { x: -1, y: 0 };
+var north = { x: 0, y: -1 };
+var south = { x: 0, y: 1 };
 
+
+/**
+ * Prototypes
+ */
+function SnakeTransport()
+{
+  this.color     = [];
+  this.blocks    = [];
+  this.direction = [];
+  this.position  = null;
+};
+
+
+/**
+ * Socket.io
+ */
 io.sockets.on('connection', function(client) {
   client.on('wantMulti', function( data ) {
      if( waiting === null ) {
@@ -59,17 +81,24 @@ io.sockets.on('connection', function(client) {
         players.pop( newGame );
         waiting = null;
         
-        // prepare the snakes for both players
-        var snake = {
-          blocks:    [],
-          position:  { x: 5, y: 5 },
-          width:     16,
-          height:     16,
-          direction: east
-        };
+        var player1 = new SnakeTransport();
+        var player2 = new SnakeTransport();
         
-        newGame.c1.emit('go');
-        newGame.c2.emit('go');
+        player1.color = "#00F";
+        player1.blocks = [[5,5],[6,5],[7,5]];
+        player1.direction = east;
+        player1.position = { x: 7, y: 5 };
+        
+        player2.color = "#F00";
+        player2.blocks = [[22,5],[21,5],[20,5]];
+        player2.direction = west;
+        player2.position = { x: 20, y: 5 };
+        
+        player1JSON = JSON.stringify(player1);
+        player2JSON = JSON.stringify(player2);
+        
+        newGame.c1.emit( 'setSnakes', player1JSON, player2JSON );
+        newGame.c2.emit( 'setSnakes', player2JSON, player1JSON);
      }
   });
 

@@ -1,18 +1,48 @@
+var east = { x: 1, y: 0 };
+var west = { x: -1, y: 0 };
+var north = { x: 0, y: -1 };
+var south = { x: 0, y: 1 };
+
 function Snake()
 {
+  this.color    = "#f00";
   this.blocks   = [];
   this.position = { x: 5, y: 5 };
   this.width    = 16;
   this.height   =  16;
   this.direction= east;
   
-  this.init = function() {
+  this.init = function( JSONSnake ) {
     this.blocks.length = this.length = 0;
     
-    for ( var i = 0; i < 3; ++i ) {
-      this.addBlock();
+    if( JSONSnake === undefined ) {
+      for ( var i = 0; i < 3; ++i ) {
+        this.addBlock();
+      }
+    } else {
+      console.log( "Init snake from server" );
+      tSnake = $.parseJSON( JSONSnake );
+      this.color     = tSnake.color;
+      this.direction = tSnake.direction;
+      this.position  = tSnake.position;
+      
+      for (var i = 0; i < tSnake.blocks.length; ++i) {
+        console.log("Set block on x pos: ", tSnake.blocks[i][0] );
+        var c = gameBoard.rect( tSnake.blocks[i][0] * this.width+3, tSnake.blocks[i][1] * this.height+3, this.width, this.height, 3 );
+        c.attr("fill", this.color);
+        c.attr("stroke", "#333");
+        this.blocks.unshift( c );
+      }
     }
   };
+  
+  
+  this.remove = function() {
+    for (var i = 0; i < this.blocks.length; ++i) {
+      this.blocks[i].remove();
+    }
+  }
+  
   
   this.addBlock = function() {
     var x = this.position.x + this.direction.x;
@@ -27,8 +57,8 @@ function Snake()
     if( y < 0 )
       y = gameBoard.sizeY-1;
     
-    var c = gameBoard.rect( x * this.width+3, y * this.height+3, this.width, this.height, 3 )
-    c.attr("fill", "#f00");
+    var c = gameBoard.rect( x * this.width+3, y * this.height+3, this.width, this.height, 3 );
+    c.attr("fill", this.color);
     c.attr("stroke", "#333");
     
     this.blocks.unshift( c );
@@ -42,4 +72,15 @@ function Snake()
     this.blocks.pop().remove();
     this.addBlock();
   };
+};
+
+
+function Game()
+{
+  this.play = function() {
+    snake.move();
+    if( isMultiplayer )
+      snake2.move();
+  };
+  
 };

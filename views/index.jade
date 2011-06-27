@@ -19,7 +19,6 @@ html
     script(type='text/javascript')
       var socket = io.connect();
 
-
       var gameLoopID = null;
       var countdownID = null;
 
@@ -31,17 +30,12 @@ html
       var waitingdots  = 0;
       var waitingDotsID = null;
 
-
-      var east = { x: 1, y: 0 };
-      var west = { x: -1, y: 0 };
-      var north = { x: 0, y: -1 };
-      var south = { x: 0, y: 1 };
-
-
-
       var gameBoard = null;
       var pause = true;
+
+      var game = new Game();
       var snake = new Snake();
+      var snake2 = new Snake();
 
       var showCount = {
         i:    3,
@@ -131,7 +125,7 @@ html
       };
 
       function startMultiPlayer() {
-        socket.emit( 'w', "wantMulti" );
+        socket.emit( 'wantMulti' );
 
         multiplayer = gameBoard.text( 5, 5, "Waiting for player" ).attr("font-size", 16).attr("text-anchor", "start");
         waitingDotsID = setInterval( printWaitingDots, 400 );
@@ -147,7 +141,7 @@ html
       function togglePause() {
         if ( pause ) {
           pause = false;
-          gameLoopID = setInterval( "snake.move()", 200 );
+          gameLoopID = setInterval( "game.play()", 200 );
         } else {
           pause = true;
           clearInterval( gameLoopID );
@@ -172,13 +166,16 @@ html
         showCount.i--;
       }
 
-      
-
-
 
       // Add a connect listener
-      socket.on('setSnake',function( snake ) {
-        console.log('Received a message from the server!',data);
+      socket.on('setSnakes',function( snakeTJSON1, snakeTJSON2 ) {
+        snake.remove();
+        snake.init( snakeTJSON1 );
+        snake2.remove();
+        snake2.init( snakeTJSON2 );
+
+        showCountDownThenStart();
+
       });
 
 
