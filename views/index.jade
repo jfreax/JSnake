@@ -8,6 +8,7 @@ html
     script(type="text/javascript", src="/javascripts/raphael-min.js")
     script(type="text/javascript", src="/javascripts/socket.io.js")
     script(type="text/javascript", src="/javascripts/jsnake.js")
+    script(type="text/javascript", src="/javascripts/input.js")
 
     style(type="text/css")
       .canvas{
@@ -57,7 +58,6 @@ html
       });
 
 
-
       function drawMenu() {
         console.log("Draw menu");
         singleplayer = gameBoard.text( gameBoard.width/2, gameBoard.height/2 - 40, "singleplayer" ).attr("font-size", 48);
@@ -67,49 +67,6 @@ html
 
       };
 
-      function bindKeyboard() {
-        $(document).keydown(function(e) {
-          console.log( e.keyCode );
-          switch( e.keyCode ) {
-            case 40:
-              if( isMenu ) {
-                multiplayer.attr("stroke", "#000").attr("stroke-width", "3");
-                singleplayer.attr("stroke", "#000").attr("stroke-width", "0");
-                isMultiplayer = true;
-              } else {
-                if ( snake.direction != north )
-                  snake.direction = south;
-              }
-              break;
-            case 38:
-              if( isMenu ) {
-                singleplayer.attr("stroke", "#000").attr("stroke-width", "3");
-                multiplayer.attr("stroke", "#000").attr("stroke-width", "0");
-                isMultiplayer = false;
-              } else {
-                if ( snake.direction != south )
-                  snake.direction = north;
-              }
-              break;
-            case 37:
-              if ( snake.direction != east )
-                snake.direction = west;
-              break;
-            case 39:
-              if ( snake.direction != west )
-                snake.direction = east;
-              break;
-            case 13: // Enter
-              if( isMenu ) {
-                startGame();
-              }
-              break;
-            case 80: // 'p'
-              togglePause();
-              break;
-          }
-        });
-      };
 
       function startGame() {
         isMenu = false;
@@ -139,13 +96,7 @@ html
       }
 
       function togglePause() {
-        if ( pause ) {
-          pause = false;
-          gameLoopID = setInterval( "game.play()", 200 );
-        } else {
-          pause = true;
-          clearInterval( gameLoopID );
-        }
+        socket.emit( 'togglePause' );
       };
 
       function showCountDownThenStart() {
@@ -168,6 +119,9 @@ html
 
 
       // Add a connect listener
+      // ----------------------
+
+      // Set initial snakes for multiplayer
       socket.on('setSnakes',function( snakeTJSON1, snakeTJSON2 ) {
         snake.remove();
         snake.init( snakeTJSON1 );
@@ -177,6 +131,23 @@ html
         showCountDownThenStart();
 
       });
+
+      // Change opponents direction
+      socket.on('chDir',function( direction ) {
+        snake2.direction = direction;
+      });
+
+      // Toggle between pause and play
+      socket.on('togglePause',function( newPause ) {
+        if ( newPause ) {
+          pause = false;
+          gameLoopID = setInterval( "game.play()", 200 );
+        } else {
+          pause = true;
+          clearInterval( gameLoopID );
+        }
+      });
+
 
 
   body

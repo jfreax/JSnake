@@ -3,6 +3,25 @@ var west = { x: -1, y: 0 };
 var north = { x: 0, y: -1 };
 var south = { x: 0, y: 1 };
 
+
+function opposite( dir )
+{
+  switch( dir ) {
+    case north:
+      return south;
+      break;
+    case south:
+      return north;
+      break;
+    case west:
+      return east;
+      break;
+    case east:
+      return west;
+      break;
+  }
+}
+
 function Snake()
 {
   this.color    = "#f00";
@@ -68,9 +87,15 @@ function Snake()
   };
   
   this.move = function() {
-    console.log("Move: ", this);
     this.blocks.pop().remove();
     this.addBlock();
+  };
+  
+  this.changeDirection = function( direction ) {
+    if ( snake.direction != opposite(direction) ) {
+      snake.direction = direction;
+      socket.emit( 'chDir', direction );
+    }
   };
 };
 

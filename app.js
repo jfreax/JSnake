@@ -45,8 +45,6 @@ console.log("Express server listening on port %d in %s mode", app.address().port
  * Globals
  */
 var waiting = null;
-var players = [];
-
 
 /**
  * "Enums"
@@ -70,6 +68,23 @@ function SnakeTransport()
 
 
 /**
+ * Functions
+ */
+function GetUserByID( idIAmLookingFor, callback ) // deprecated
+{
+  io.store.clients(function (ids) {
+    ids.forEach( function ( id ) {
+      if ( id == idIAmLookingFor ) {
+        callback( io.store.client(id) );
+        return; 
+      }
+    });
+
+  });
+  return 0; // Ohh ooh O.o
+}
+
+/**
  * Socket.io
  */
 io.sockets.on('connection', function(client) {
@@ -77,13 +92,14 @@ io.sockets.on('connection', function(client) {
      if( waiting === null ) {
        waiting = client;
      } else {
-        newGame = { c1: waiting, c2: client };
-        players.pop( newGame );
+        // Save player sockets
+        var localWaiting = waiting;
         waiting = null;
         
         var player1 = new SnakeTransport();
         var player2 = new SnakeTransport();
         
+        // Create start snakes
         player1.color = "#00F";
         player1.blocks = [[5,5],[6,5],[7,5]];
         player1.direction = east;
@@ -97,9 +113,59 @@ io.sockets.on('connection', function(client) {
         player1JSON = JSON.stringify(player1);
         player2JSON = JSON.stringify(player2);
         
-        newGame.c1.emit( 'setSnakes', player1JSON, player2JSON );
-        newGame.c2.emit( 'setSnakes', player2JSON, player1JSON);
+        // Send start snakes
+        client.emit( 'setSnakes', player1JSON, player2JSON );
+        localWaiting.emit( 'setSnakes', player2JSON, player1JSON );
+        
+        // Store opponent player ids
+        client.set('opponent', localWaiting, function () {
+            //console.log( "Set opponent: ", waitingUser );
+          client.emit('ready');
+        });
+        localWaiting.set('opponent', client, function () {
+          //console.log( "Set opponent2: ", client );
+          localWaiting.emit('ready');
+        });
+        
+        // Save some general variables
+        client.set( 'pause', true );
+        localWaiting.set( 'pause', true );
+        
      }
+  });
+  
+  
+  // Change opponents direction
+  client.on('chDir', function( direction ) {
+    client.get('opponent', function ( err, opponent ) {   
+      opponent.emit( 'chDir', direction );
+    });
+  });
+  
+  // Toggle between pause and play
+  client.on('togglePause', function( direction ) {
+    client.get('pause', function ( err, pause ) {
+
+      client.get('opponent', function ( err, opponent ) {
+        client.emit( 'togglePause', !pause );
+        opponent.emit( 'togglePause', !pause );
+        
+        client.set('pause', !pause );
+        opponent.set('pause', !pause );
+      });
+      
+    });
+  });
+  
+  client.on('disconnect', function () {
+    console.log("Ohh fuck, und weg...");
+  });
+  
+  
+  client.on('connect', function () {
+    console.log("Gut, gut, wieder da :) ...");
   });
 
 });
+
+  
