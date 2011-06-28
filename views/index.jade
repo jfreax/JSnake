@@ -21,6 +21,7 @@ html
       var socket = io.connect();
 
       var gameLoopID = null;
+      var gameSyncID = null;
       var countdownID = null;
 
       var isMenu = true;
@@ -51,7 +52,6 @@ html
         gameBoard.sizeX = sizeX;
         gameBoard.sizeY = sizeY;
 
-        snake.init();
         drawMenu();
         bindKeyboard();
 
@@ -76,6 +76,7 @@ html
         if( isMultiplayer ) {
           startMultiPlayer();
         } else {
+          snake.init();
           showCountDownThenStart();
         }
 
@@ -123,6 +124,7 @@ html
 
       // Set initial snakes for multiplayer
       socket.on('setSnakes',function( snakeTJSON1, snakeTJSON2 ) {
+        console.log("Initial set snakes");
         snake.remove();
         snake.init( snakeTJSON1 );
         snake2.remove();
@@ -130,6 +132,13 @@ html
 
         showCountDownThenStart();
 
+      });
+
+      // Set opponents snake
+      socket.on('setOSnake',function( snakeTJSON ) {
+        console.log("Set opponents snake");
+        snake2.remove();
+        snake2.init( snakeTJSON );
       });
 
       // Change opponents direction
@@ -142,13 +151,41 @@ html
         if ( newPause ) {
           pause = false;
           gameLoopID = setInterval( "game.play()", 200 );
+          gameSyncID = setInterval( "game.synchronize()", 600 ); // TODO 600 == magic number!
         } else {
           pause = true;
           clearInterval( gameLoopID );
+          clearInterval( gameSyncID );
         }
       });
 
+      // Get position of the other players snake
+      socket.on('synchronize',function( position ) {
+        if ( position.x != snake2.position.x ||
+            position.y != snake2.position.y ) {
+          socket.emit( 'updOSnake' );
+        }
+      });
 
+      // Send my snake data to server
+      socket.on('getSnake',function() {
+        var blocksT = [];
+        for( var i = 0; i < snake.blocks.length; ++i ) {
+          blocksT.unshift([ (snake.blocks[i].attrs.x-3) / snake.width, (snake.blocks[i].attrs.y-3) / snake.height ]);
+        }
+
+        var snakeT = new SnakeTransport();
+        snakeT.color     = snake.color;
+        snakeT.direction = snake.direction;
+        snakeT.position  = snake.position;
+        snakeT.blocks    = blocksT;
+
+        console.log(" Ich sende: ", snakeT );
+        
+        //var snakeTJSON = $.getJSON( snakeT );
+        //console.log(" Ich sende2: ", snakeTJSON );
+        socket.emit( 'getSnake', snakeT );
+      });
 
   body
     p Welcome to #{title}

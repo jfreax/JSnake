@@ -22,6 +22,16 @@ function opposite( dir )
   }
 }
 
+
+function SnakeTransport()
+{
+  this.color     = [];
+  this.blocks    = [];
+  this.direction = [];
+  this.position  = null;
+};
+
+
 function Snake()
 {
   this.color    = "#f00";
@@ -40,7 +50,7 @@ function Snake()
       }
     } else {
       console.log( "Init snake from server" );
-      tSnake = $.parseJSON( JSONSnake );
+      var tSnake = $.parseJSON( JSONSnake );
       this.color     = tSnake.color;
       this.direction = tSnake.direction;
       this.position  = tSnake.position;
@@ -57,6 +67,7 @@ function Snake()
   
   
   this.remove = function() {
+    console.log("Remove!");
     for (var i = 0; i < this.blocks.length; ++i) {
       this.blocks[i].remove();
     }
@@ -107,5 +118,10 @@ function Game()
     if( isMultiplayer )
       snake2.move();
   };
+  
+  
+  this.synchronize = function() {
+    socket.emit( 'synchronize', snake.position );
+  }
   
 };

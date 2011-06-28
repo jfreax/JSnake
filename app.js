@@ -84,6 +84,16 @@ function GetUserByID( idIAmLookingFor, callback ) // deprecated
   return 0; // Ohh ooh O.o
 }
 
+
+function addApple( client )
+{
+  client.get('opponent', function ( err, opponent ) {
+    opponent.emit( 'addApple', pos );
+    client.emit( 'addApple', pos );
+  });
+});
+
+
 /**
  * Socket.io
  */
@@ -157,13 +167,41 @@ io.sockets.on('connection', function(client) {
     });
   });
   
-  client.on('disconnect', function () {
-    console.log("Ohh fuck, und weg...");
+  // Get position of players snake
+  client.on('synchronize', function( position ) {
+    client.get('opponent', function ( err, opponent ) {
+      // and send this position to the other player
+      opponent.emit( 'synchronize', position );
+    });
+  });
+  
+  // Player needs to update the opponents snake
+  client.on('updOSnake', function() {
+    client.get('opponent', function ( err, opponent ) {
+      opponent.emit( 'getSnake' );
+    });
+  });
+  
+  // Get users snake and send them back to the other player
+  client.on('getSnake', function( snake ) {
+    console.log("Get snake! ", snake );
+    client.get('opponent', function ( err, opponent ) {
+      opponent.emit( 'setOSnake', JSON.stringify(snake) );
+    });
   });
   
   
-  client.on('connect', function () {
-    console.log("Gut, gut, wieder da :) ...");
+
+  
+  
+  client.on('disconnect', function () {
+    if( client === waiting ) {
+      waiting = null;
+    }
+  });
+  
+  
+  client.on('connect', function () { // stub
   });
 
 });
