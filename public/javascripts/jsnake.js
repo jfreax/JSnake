@@ -113,6 +113,14 @@ function Snake()
 
 function Game()
 {
+  var gameLoopID = null;
+  var gameSyncID = null;
+  var countdownID = null;
+  
+  var gameBoard = null;
+  //var pause = true;
+  
+  
   this.play = function() {
     snake.move();
     if( isMultiplayer )
@@ -122,6 +130,11 @@ function Game()
   
   this.synchronize = function() {
     socket.emit( 'synchronize', snake.position );
+  }
+  
+  
+  this.addApple = function() {
+    
   }
   
 };

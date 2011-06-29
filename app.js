@@ -85,15 +85,6 @@ function GetUserByID( idIAmLookingFor, callback ) // deprecated
 }
 
 
-function addApple( client )
-{
-  client.get('opponent', function ( err, opponent ) {
-    opponent.emit( 'addApple', pos );
-    client.emit( 'addApple', pos );
-  });
-});
-
-
 /**
  * Socket.io
  */
@@ -147,8 +138,10 @@ io.sockets.on('connection', function(client) {
   
   // Change opponents direction
   client.on('chDir', function( direction ) {
-    client.get('opponent', function ( err, opponent ) {   
-      opponent.emit( 'chDir', direction );
+    client.get('opponent', function ( err, opponent ) {
+      if( opponent != undefined ) {
+        opponent.emit( 'chDir', direction );
+      }
     });
   });
   
@@ -158,10 +151,13 @@ io.sockets.on('connection', function(client) {
 
       client.get('opponent', function ( err, opponent ) {
         client.emit( 'togglePause', !pause );
-        opponent.emit( 'togglePause', !pause );
         
+        if( opponent != undefined ) {
+          opponent.emit( 'togglePause', !pause );
+          opponent.set('pause', !pause );
+        }
         client.set('pause', !pause );
-        opponent.set('pause', !pause );
+        
       });
       
     });
@@ -171,7 +167,9 @@ io.sockets.on('connection', function(client) {
   client.on('synchronize', function( position ) {
     client.get('opponent', function ( err, opponent ) {
       // and send this position to the other player
-      opponent.emit( 'synchronize', position );
+      if( opponent != undefined ) {
+        opponent.emit( 'synchronize', position );
+      }
     });
   });
   

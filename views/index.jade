@@ -20,10 +20,6 @@ html
     script(type='text/javascript')
       var socket = io.connect();
 
-      var gameLoopID = null;
-      var gameSyncID = null;
-      var countdownID = null;
-
       var isMenu = true;
       var singleplayer = null;
       var multiplayer  = null;
@@ -31,9 +27,6 @@ html
 
       var waitingdots  = 0;
       var waitingDotsID = null;
-
-      var gameBoard = null;
-      var pause = true;
 
       var game = new Game();
       var snake = new Snake();
@@ -147,15 +140,15 @@ html
       });
 
       // Toggle between pause and play
-      socket.on('togglePause',function( newPause ) {
-        if ( newPause ) {
-          pause = false;
-          gameLoopID = setInterval( "game.play()", 200 );
-          gameSyncID = setInterval( "game.synchronize()", 600 ); // TODO 600 == magic number!
+      socket.on('togglePause',function( pause ) {
+        if ( pause ) {
+          //game.pause = false;
+          game.gameLoopID = setInterval( "game.play()", 200 );
+          game.gameSyncID = setInterval( "game.synchronize()", 600 ); // TODO 600 == magic number!
         } else {
-          pause = true;
-          clearInterval( gameLoopID );
-          clearInterval( gameSyncID );
+          g//ame.pause = true;
+          clearInterval( game.gameLoopID );
+          clearInterval( game.gameSyncID );
         }
       });
 
